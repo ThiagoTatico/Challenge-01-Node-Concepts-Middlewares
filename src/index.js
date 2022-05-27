@@ -25,7 +25,9 @@ function checksCreateTodosUserAvailability(req, res, next) {
   const { user } = req;
 
   if( user.pro === false ) {
-    if( user.todos.length <= 10 ) return next();
+    if( user.todos.length < 10 ) return next();
+
+    if( user.todos.length === 10 ) return res.status(403).json({ error: 'Username already exists' });
   }
 
   if( user.pro === true ) return next();
@@ -36,12 +38,12 @@ function checksTodoExists(req, res, next) {
   const { id } = req.params;
 
   const user = users.find( (user) => user.username === username );
+  
+  if(!user) return res.status(404).json( { error: "User Not Found" } );
 
-  if (!user) return res.status(404).json({ error: "User Not Found" });
+  if(id.length < 36) return res.status(400);
 
   const todo = user.todos.find(todo => todo.id === id);
-
-  if( todo.id.length < 36) return res.status(400).json( { error: 'Id type not compatible' } );
 
   if(!todo) return res.status(404).json( { error: 'Todo not found' } );
 
@@ -52,7 +54,15 @@ function checksTodoExists(req, res, next) {
 }
 
 function findUserById(req, res, next) {
-  // Complete aqui
+  const { id } = req.params;
+
+  const user = users.find( (user) => user.id === id);
+
+  if (!user) return res.status(404).json({ error: "User Not Found" });
+
+  req.user = user;
+
+  return next();
 }
 
 app.post('/users', (req, res) => {
@@ -141,9 +151,7 @@ app.delete('/todos/:id', checksExistsUserAccount, checksTodoExists, (req, res) =
 
   const todoIndex = user.todos.indexOf(todo);
 
-  if (todoIndex === -1) {
-    return res.status(404).json({ error: 'Todo not found' });
-  }
+  if (todoIndex === -1) return res.status(404).json({ error: 'Todo not found' });
 
   user.todos.splice(todoIndex, 1);
 
