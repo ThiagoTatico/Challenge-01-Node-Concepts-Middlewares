@@ -39,14 +39,16 @@ function checksTodoExists(req, res, next) {
 
   if (!user) return res.status(404).json({ error: "User Not Found" });
 
+  const todo = user.todos.find(todo => todo.id === id);
 
+  if( todo.id.length < 36) return res.status(400).json( { error: 'Id type not compatible' } );
 
+  if(!todo) return res.status(404).json( { error: 'Todo not found' } );
 
   req.user = user;
   req.todo = todo;
 
   return next();
-
 }
 
 function findUserById(req, res, next) {
